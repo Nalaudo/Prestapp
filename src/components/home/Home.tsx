@@ -2,20 +2,27 @@
 import LoanForm from "@/global/forms/LoanForm";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const Home = () => {
-  const { data: session, status: statusSession } = useSession();
+  const [isLogged, setIsLogged] = useState(false);
+  const { status: statusSession } = useSession();
 
   const router = useRouter();
 
-  console.log(session);
+  useEffect(() => {
+    setIsLogged(statusSession === "authenticated");
+  }, [statusSession]);
 
   useEffect(() => {
     if (statusSession === "unauthenticated") {
       router.push("/login");
     }
   }, [statusSession, router]);
+
+  if (!isLogged) {
+    return null;
+  }
 
   return (
     <div>

@@ -2,15 +2,14 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import AWS from "aws-sdk";
 import process from "process";
-import crypto from "crypto"; // Import crypto module for generating the SECRET_HASH
+import crypto from "crypto";
 
 AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  accessKeyId: process.env.ACCESS_KEY_ID_AWS,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS,
   region: process.env.COGNITO_REGION,
 });
 
-// Function to generate SECRET_HASH
 const generateSecretHash = (username: string) => {
   const clientId = process.env.COGNITO_CLIENT_ID as string;
   const secret = process.env.COGNITO_CLIENT_SECRET as string;
@@ -19,11 +18,10 @@ const generateSecretHash = (username: string) => {
     throw new Error("Cognito Client ID or Client Secret is not defined.");
   }
 
-  // Ensure that the username and clientId are combined and hashed correctly
   return crypto
-    .createHmac("sha256", secret) // Create HMAC with sha256
-    .update(username + clientId) // Use username (email) + clientId
-    .digest("base64"); // Return as base64
+    .createHmac("sha256", secret)
+    .update(username + clientId)
+    .digest("base64");
 };
 
 const handler = NextAuth({
@@ -50,15 +48,12 @@ const handler = NextAuth({
           },
         };
 
-        console.log("Cognito Params:", params); // Log the params to verify
-
         try {
           const response = await cognito.initiateAuth(params).promise();
-          console.log("Cognito Response:", response); // Log the response for debugging
 
           const user = {
             id: response.ChallengeParameters?.USER_ID_FOR_SRP as string,
-            name: credentials.username,
+            email: credentials.username,
           };
           return user;
         } catch (error) {

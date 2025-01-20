@@ -9,9 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.731.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@hookform/resolvers": "^3.10.0",
+    "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
     "@prisma/client": "^6.2.1",
     "@types/aws-sdk": "^0.0.42",

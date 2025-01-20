@@ -1,55 +1,64 @@
 "use client";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import {
   TextField,
   Button,
-  IconButton,
-  InputAdornment,
   Box,
   Container,
+  InputAdornment,
+  IconButton,
   Typography,
 } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PrestappLogo from "../../../public/logos/PrestappLogo";
+import { useState } from "react";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+
+interface SignUpFormInputs {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+}
 
 const schema = yup.object().shape({
-  email: yup.string().required("Email is required"),
-  password: yup.string().required("Password is required"),
+  email: yup.string().email("Invalid email").required("Email is required"),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+  name: yup.string().required("Name is required"),
+  phone: yup.string().optional(),
 });
 
-const Login = () => {
+const SignUp: React.FC = () => {
   const [hidePassword, setHidePassword] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
 
   const {
-    handleSubmit,
     control,
-    reset,
+    handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<SignUpFormInputs>({
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = async (data: { email: string; password: string }) => {
-    setError(null);
-    const response = await signIn("credentials", {
-      username: data.email,
-      password: data.password,
-      redirect: false,
+  const onSubmit = async (data: SignUpFormInputs) => {
+    fetch("/api/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }).then((response) => {
+      if (!response.ok) {
+        setError("Sign up failed");
+      } else router.push("/login");
     });
-
-    if (response?.ok) {
-      router.push("/");
-    } else {
-      reset();
-      setError("Invalid credentials");
-    }
   };
 
   return (
@@ -94,10 +103,10 @@ const Login = () => {
               {...field}
               label="Email"
               variant="outlined"
+              margin="normal"
+              fullWidth
               error={!!errors.email}
               helperText={errors.email ? errors.email.message : ""}
-              fullWidth
-              margin="normal"
             />
           )}
         />
@@ -130,6 +139,38 @@ const Login = () => {
             />
           )}
         />
+        <Controller
+          name="name"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Name"
+              variant="outlined"
+              margin="normal"
+              fullWidth
+              error={!!errors.name}
+              helperText={errors.name ? errors.name.message : ""}
+            />
+          )}
+        />
+        <Controller
+          name="phone"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Phone (optional)"
+              variant="outlined"
+              margin="normal"
+              fullWidth
+              error={!!errors.phone}
+              helperText={errors.phone ? errors.phone.message : ""}
+            />
+          )}
+        />
         {error && (
           <Typography
             sx={{
@@ -140,6 +181,7 @@ const Login = () => {
               margin: "10px 0",
               padding: "10px",
               borderRadius: "5px",
+              width: "100%",
             }}
           >
             {error}
@@ -152,20 +194,20 @@ const Login = () => {
           color="primary"
           sx={{ mt: 3, mb: 2 }}
         >
-          Sign in
+          Sign Up
         </Button>
         <Button
           type="button"
           variant="outlined"
           color="secondary"
           fullWidth
-          onClick={() => router.push("/signup")}
+          onClick={() => router.push("/login")}
         >
-          Sign up
+          Sign In
         </Button>
       </Box>
     </Container>
   );
 };
 
-export default Login;
+export default SignUp;
