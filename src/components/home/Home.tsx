@@ -24,11 +24,7 @@ const Home = () => {
     return null;
   }
 
-  return (
-    <div>
-      <LoanForm />
-    </div>
-  );
+  return <LoanForm />;
 };
 
 export default Home;

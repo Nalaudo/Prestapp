@@ -22,3 +22,14 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Loan {
+  id          String   @id @default(cuid())
+  email       String
+  amount      Int
+  address     String
+  birthDate   DateTime
+  phoneNumber String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

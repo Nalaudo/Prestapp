@@ -15,6 +15,7 @@ import PrestappLogo from "../../../public/logos/PrestappLogo";
 import { useState } from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 interface SignUpFormInputs {
   email: string;
@@ -54,10 +55,23 @@ const SignUp: React.FC = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
-    }).then((response) => {
+    }).then(async (response) => {
       if (!response.ok) {
         setError("Sign up failed");
-      } else router.push("/login");
+      } else {
+        const response = await signIn("credentials", {
+          username: data.email,
+          password: data.password,
+          redirect: false,
+        });
+
+        if (response?.ok) {
+          router.push("/");
+        } else {
+          router.push("/login");
+        }
+        router.push("/");
+      }
     });
   };
 

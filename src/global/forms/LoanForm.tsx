@@ -1,10 +1,12 @@
 "use client";
 import React, { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { TextField, Button, Box, Container } from "@mui/material";
+import { TextField, Button, Box, Container, Typography } from "@mui/material";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { subYears } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const schema = yup.object().shape({
   firstName: yup
@@ -53,6 +55,12 @@ const schema = yup.object().shape({
 });
 
 const LoanForm = () => {
+  const { data: session } = useSession();
+
+  const [error, setError] = React.useState<string | null>(null);
+
+  const router = useRouter();
+
   const {
     control,
     handleSubmit,
@@ -70,7 +78,6 @@ const LoanForm = () => {
       const parsedData = JSON.parse(savedData);
       (Object.keys(parsedData) as Array<keyof typeof parsedData>).forEach(
         (key) => {
-          // Ensure loanAmount is a number
           const value =
             key === "loanAmount" ? Number(parsedData[key]) : parsedData[key];
           setValue(key as keyof typeof schema.fields, value);
@@ -79,9 +86,21 @@ const LoanForm = () => {
     }
   }, [setValue]);
 
+  useEffect(() => {
+    if (!session?.user?.email) {
+      return;
+    }
+    setValue("email", session?.user?.email);
+  }, [session?.user?.email]);
+
   const onChange = () => {
     const formData = getValues();
     localStorage.setItem("loanFormData", JSON.stringify(formData));
+  };
+
+  const handleReset = () => {
+    reset();
+    localStorage.removeItem("loanFormData");
   };
 
   const onSubmit = (data: {
@@ -93,13 +112,22 @@ const LoanForm = () => {
     birthDate: Date;
     phoneNumber: string;
   }) => {
-    console.log(data);
-    alert("Formulario enviado con éxito");
-  };
-
-  const handleReset = () => {
-    reset();
-    localStorage.removeItem("loanFormData");
+    fetch("/api/loan/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then(() => {
+        handleReset();
+        router.push("/profile");
+      })
+      .catch((error) => {
+        console.error(error);
+        setError("Error sending the form");
+      });
   };
 
   return (
@@ -178,6 +206,7 @@ const LoanForm = () => {
         <Controller
           name="email"
           control={control}
+          disabled
           defaultValue=""
           render={({ field }) => (
             <TextField
@@ -289,6 +318,21 @@ const LoanForm = () => {
             />
           )}
         />
+        {error && (
+          <Typography
+            sx={{
+              color: "red",
+              fontSize: "16px",
+              textAlign: "center",
+              border: "1px solid red",
+              margin: "10px 0",
+              padding: "10px",
+              borderRadius: "5px",
+            }}
+          >
+            {error}
+          </Typography>
+        )}
         <Button
           type="submit"
           variant="contained"
